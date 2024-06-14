@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ToDo List</title>
+    <link href="./dist/style.css" rel="stylesheet" />
+    <link href="./dist/style-custom.css" rel="stylesheet" />
+    <link rel="icon" type="image/x-icon" href="todo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div x-data="todoApp()" class="hero min-h-screen bg-base-200">
+      <div class="hero-content text-center">
+        <div class="max-w-md">
+          <h1 class="text-5xl font-bold">ToDo</h1>
+          <p class="py-6">check, do and delete</p>
+
+          <form x-on:submit.prevent class="mt-10">
+            <input
+              type="text"
+              x-model="userInput"
+              @blur="saveEdit"
+              placeholder="What needs to be done?"
+              class="input input-primary input-bordered mr-3 font-poppins" />
+            <button
+              @click="currentEdit ? saveEdit() : addTodo"
+              class="btn btn-md font-bold uppercase btn-primary mb-5">
+              <span x-text="currentEdit ? 'Save' : 'Add'"></span>
+            </button>
+          </form>
+          
+          <template x-for="todo in todos" :key="todo.id">
+            <div class="my-3 flex items-center gap-5 font-poppins">
+              <input type="checkbox" x-model="todo.completed" class="checkbox" />
+              <span 
+                x-text="todo.name" 
+                class="text-left"
+                :class="todo.completed ? 'line-through' : ''"
+                @click="editTodo(todo)">
+              </span>
+              <button
+                @click="todos.splice(todos.indexOf(todo), 1)"
+                class="btn btn-sm btn-circle hover:btn-error">
+                x
+              </button>
+            </div>
+          </template>
+          <button @click="todos = []" x-show="todos.length > 1" class="btn btn-error btn-sm mt-10">
+            Clear All
+          </button>
+          <button
+            @click="todos = todos.filter(todo => !todo.completed)"
+            class="btn btn-neutral btn-sm mt-10"
+            x-show="todos.filter(todo => todo.completed).length > 0">
+            Clear all completed
+          </button>
+
+          <div x-show="todos.length > 1" class="mt-10">
+            <span x-text="todos.filter(todo => todo.completed).length"></span>/
+            <span x-text="todos.length"></span> done
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <script src="./dist/script.js" defer></script>
+    <script defer>
+    function todoApp(storageKey) {
+  return {
+    open: false,
+    todos: [],
+    userInput: "",
+    currentEdit: null,
+    init() {
+      try {
+        this.todos = JSON.parse(localStorage.getItem(storageKey)) || [];
+      } catch (error) {
+        console.error('Failed to parse todos from local storage', error);
+      }
+
+      this.$watch("todos", (newTodos) => {
+        this.updateLocalStorage(newTodos);
+      });
+    },
+    addTodo() {
+      if (this.userInput.trim().length) {
+        this.todos.push({ name: this.userInput, completed: false, id: this.generateId() });
+        this.userInput = "";
+        this.updateLocalStorage(this.todos);
+      }
+    },
+    editTodo(todo) {
+      this.currentEdit = todo;
+      this.userInput = todo.name;
+    },
+    saveEdit() {
+      if (this.userInput.trim().length) {
+        this.currentEdit.name = this.userInput;
+        this.userInput = "";
+        this.currentEdit = null;
+        this.updateLocalStorage(this.todos);
+      }
+    },
+    clearAll() {
+      this.todos = [];
+      this.updateLocalStorage(this.todos);
+    },
+    clearCompleted() {
+      this.todos = this.todos.filter((todo) => !todo.completed);
+      this.updateLocalStorage(this.todos);
+    },
+    updateLocalStorage(todos) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(todos));
+      } catch (error) {
+        console.error('Failed to update todos in local storage', error);
+      }
+    },
+    generateId() {
+      return Math.random().toString(36).substr(2, 9);
+    },
+  };
+}
+
+const todoApp1 = todoApp("todos-1");
+const todoApp2 = todoApp("todos-2");
+</script>
+  </body>
+</html>
